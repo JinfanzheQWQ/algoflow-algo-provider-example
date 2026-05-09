@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: algoflow-algo-provider-example
+  labels:
+    app: algoflow-algo-provider-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: algoflow-algo-provider-example
+  template:
+    metadata:
+      labels:
+        app: algoflow-algo-provider-example
+    spec:
+      containers:
+        - name: algoflow-algo-provider-example
+          image: hx-repo.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          lifecycle:
+            preStop:
+              httpGet:
+                path: /shutdown
+                port: 8000
+          terminationMessagePolicy: FallbackToLogsOnError
+          env:
+            - name: QUEUE_NAME
+              value: video_translate
+            - name: SCHEDULER_URL
+              value: "http://algoflow-task-scheduler:8010"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "1"
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+      terminationGracePeriodSeconds: 60

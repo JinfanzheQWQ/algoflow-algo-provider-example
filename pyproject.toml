@@ -1,0 +1,29 @@
+[project]
+name = "algoflow-algo-provider-example"
+version = "0.1.0"
+description = "算法提供方接入 algoflow-task-node 的示例项目"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "algoflow-task-node==0.1.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+packages = ["provider_example"]
+
+[tool.uv.sources]
+algoflow-task-node = { index = "hx" }
+
+[[tool.uv.index]]
+name = "hx"
+url = "http://172.20.162.20:9000/simple/"
+publish-url = "http://172.20.162.20:9000/"
+explicit = true
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
