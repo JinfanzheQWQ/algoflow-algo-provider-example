@@ -9,12 +9,14 @@ from typing import Any
 
 
 class Handler(BaseHTTPRequestHandler):
+    # 健康检查
     def do_GET(self) -> None:
         if self.path == "/healthz":
             self._write_json(200, {"status": "ok"})
             return
         self._write_json(404, {"error": "not found"})
 
+    # 执行任务
     def do_POST(self) -> None:
         if self.path != "/execute":
             self._write_json(404, {"error": "not found"})
@@ -22,13 +24,19 @@ class Handler(BaseHTTPRequestHandler):
         try:
             request = self._read_json()
             task_id = _required_string(request, "task_id")
+
+            # 获取 params 具体透传的参数
             params = request.get("params")
             if not isinstance(params, dict):
                 raise ValueError("params is required")
+            
+            # 获取 storage_config 如果有需要的话
             storage_config = request.get("storage_config") or {}
             if not isinstance(storage_config, dict):
                 raise ValueError("storage_config must be an object")
-            name = _required_string(params, "name")
+
+            
+            name = _required_string(params, "name")  # 直接获取 name 参数
             delay_seconds = random.uniform(10, 15)
             storage_domain = storage_config.get("domain", "")
             print(
@@ -81,7 +89,7 @@ def _required_string(payload: dict[str, Any], key: str) -> str:
 def main() -> None:
     port = int(os.environ.get("ALGO_PORT", "8080"))
     server = ThreadingHTTPServer(("0.0.0.0", port), Handler)
-    print("ALGO_READY", flush=True)
+    print("ALGO_READY", flush=True)  # 算法节点准备好，可以接收任务了
     server.serve_forever()
 
 

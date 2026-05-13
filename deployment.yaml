@@ -13,13 +13,24 @@ spec:
     metadata:
       labels:
         app: algoflow-algo-provider-example
-        job-center/managed: "true"
+        job-center/managed: "true" # 是否被管理
       annotations:
-        job-center/slots: "1"
+        job-center/slots: "3" # 最大并发数 和下面环境变量对应
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: nodetype
+                    operator: In
+                    values:
+                      - gpu
+      imagePullSecrets:
+        - name: tc-shanghai-registrykey
       containers:
         - name: algoflow-algo-provider-example
-          image: hx-repo.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.0
+          image: hx-repo-shanghai.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -33,11 +44,16 @@ spec:
             - name: NODE_TYPE
               value: video_translate
             - name: SCHEDULER_URL
-              value: "http://algoflow-task-scheduler:8010"
+              value: 'http://algoflow-task-scheduler-svc:8010'
+            - name: MAX_CONCURRENCY # 最大并发数
+              value: '3'
             - name: ALGO_CMD
               value: "python -m provider_example.server"
             - name: ALGO_PORT
               value: "8080"
+            - name: ALGO_READY_TIMEOUT_SECONDS
+              value: "300"  # 算法节点准备好，可以接收任务的时间，单位：秒
+            # 以下是算法节点需要用到的环境变量，从 pod 的 metadata 中获取，可以省略，不过最好保留
             - name: POD_NAME
               valueFrom:
                 fieldRef:
