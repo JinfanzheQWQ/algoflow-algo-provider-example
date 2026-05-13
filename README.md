@@ -1,170 +1,136 @@
 # algoflow-algo-provider-example
 
-这是一个算法提供方接入 `algoflow-task-node` 的独立示例项目。
+这是算法提供方按新版 node-agent 协议接入的最小示例。只提供普通 HTTP 算法服务。
 
-重点：
+## 算法接口
 
-- 这个项目不属于框架。
-- 算法方只实现自己的 `Algorithm` 类。
-- 注册、下线、HTTP 服务、callback 都由 `algoflow-task-node` 框架处理。
-- 一个 Pod 同一时刻只处理一个 task；要并发处理就扩 Pod 副本数。
-
-## 1. 项目结构
+代码在：
 
 ```text
-algoflow-algo-provider-example/
-  pyproject.toml
-  provider_example/
-    __init__.py
-    simple_name_algorithm.py
-  sample_payload.json
-  Dockerfile
-  deployment.yaml
+provider_example/server.py
 ```
 
-## 2. 本地启动
+启动后打印：
 
-先启动 scheduler，然后启动这个算法节点：
-
-```bash
-cd /Users/xy/algoflow-task/algoflow-algo-provider-example
-
-QUEUE_NAME=video_translate \
-SCHEDULER_URL=http://127.0.0.1:8010 \
-uv run algoflow-node --algorithm provider_example.simple_name_algorithm:NameSuccessAlgorithm
+```text
+ALGO_READY
 ```
 
-`NODE_NAME`、`NODE_URL` 不写时由框架自动探测；本地要同时启动多个节点时，再手动覆盖 `PORT`、`NODE_NAME`、`NODE_URL`。
+提供：
 
-健康检查：
-
-```bash
-curl http://127.0.0.1:8000/healthz
-curl http://127.0.0.1:8000/readyz
+```text
+POST /execute
 ```
 
-## 3. 提交任务 payload
-
-gateway 提交任务时，`payload` 示例：
-
-```json
-{
-  "name": "张三"
-}
-```
-
-这个 payload 会原样进入：
-
-```python
-NameSuccessAlgorithm.handle_task(payload, context)
-```
-
-算法会：
-
-1. 从 `payload.name` 读取名字。
-2. 随机等待 10 到 15 秒。
-3. 返回 `{name}成功`。
-
-回调结果里的 `data` 类似：
+请求：
 
 ```json
 {
   "task_id": "task-xxx",
-  "name": "张三",
-  "message": "张三成功",
-  "delay_seconds": 12.345
+  "params": {
+    "name": "张三"
+  },
+  "storage_config": {
+    "domain": "static.example.com",
+    "object": {
+      "bucketName": "example-bucket",
+      "accessKeyId": "<access-key-id>",
+      "accessKeySecret": "<access-key-secret>",
+      "endpoint": "https://example-bucket.cos.ap-shanghai.myqcloud.com"
+    }
+  }
 }
 ```
 
-## 4. 算法方需要实现什么
+响应：
 
-核心代码在：
-
-```text
-provider_example/simple_name_algorithm.py
+```json
+{
+  "status": "success",
+  "result": {
+    "task_id": "task-xxx",
+    "name": "张三",
+    "message": "张三成功",
+    "delay_seconds": 12.345
+  }
+}
 ```
 
-必须继承：
+## 本地运行算法服务
 
-```python
-from algoflow_task_node import AlgoflowAlgorithm
-```
-
-必须实现：
-
-```python
-async def handle_task(self, payload, context):
-    ...
-```
-
-`handle_task` 在同一个 node 进程内不会并发执行。算法代码里可以按单任务处理模型写本地临时文件、模型上下文和外部 job 状态；如果要提高吞吐，增加 Deployment replicas。
-
-可选实现：
-
-```python
-async def startup(self, context):
-    ...
-
-async def env_init(self, payload, context):
-    ...
-
-async def shutdown(self, context):
-    ...
-```
-
-## 5. K8s 接入
-
-`deployment.yaml` 里已经演示：
-
-- `preStop` 调 `/shutdown`。
-- `readinessProbe` 走 `/readyz`。
-- `livenessProbe` 走 `/healthz`。
-- Pod name、Pod IP、node name、node url 由框架自动探测。
-
-正常滚动更新、缩容、删除 Pod 时，框架会主动从 scheduler 下线。
-
-## 6. Docker 构建
-
-发布算法包到内部源：
+只跑算法服务：
 
 ```bash
 cd /Users/xy/algoflow-task/algoflow-algo-provider-example
-./publish.sh
+python -m provider_example.server
 ```
 
-先发布框架包：
+默认监听 `8080`。如果本地 `8080` 已被占用，可以指定 `ALGO_PORT`：
 
 ```bash
-cd /Users/xy/algoflow-task/algoflow-task-node
-./publish.sh
+ALGO_PORT=19002 python -m provider_example.server
 ```
 
-算法项目依赖的是内部源里的框架包：
+手动调用：
 
-```toml
-dependencies = [
-    "algoflow-task-node==0.1.1",
-]
+```bash
+curl -X POST http://127.0.0.1:8080/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"task_id":"task-local","params":{"name":"张三"}}'
 ```
 
-镜像名默认使用项目目录名，镜像版本从 `pyproject.toml` 读取：
+如果指定了 `ALGO_PORT=19002`，调用地址改成：
 
-```text
-name = "algoflow-algo-provider-example"
-version = "0.1.0"
+```bash
+curl -X POST http://127.0.0.1:19002/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"task_id":"task-local","params":{"name":"张三"}}'
 ```
 
-打包并推送：
+## 通过 node-agent 运行
+
+先启动 scheduler，再启动 node-agent 包住算法服务：
 
 ```bash
 cd /Users/xy/algoflow-task
+
+NODE_TYPE=video_translate \
+SCHEDULER_URL=http://127.0.0.1:8010 \
+ALGO_CMD="cd /Users/xy/algoflow-task/algoflow-algo-provider-example && python -m provider_example.server" \
+ALGO_PORT=19002 \
+go run ./algoflow-task-node/cmd/node-agent
+```
+
+scheduler 的队列动作要配置成：
+
+```json
+{"action":"ASSIGN","api":"/assign"}
+```
+
+scheduler 会向 node-agent 下发：
+
+```json
+{
+  "task_id": "task-xxx",
+  "params": {
+    "name": "张三"
+  }
+}
+```
+
+## 镜像
+
+provider 镜像里会从 `algoflow-task-node:v0.0.1` 拷贝 Go node-agent，然后启动本项目的算法服务。
+
+构建前先推 node-agent 镜像：
+
+```bash
+cd /Users/xy/algoflow-task
+algoflow-task-node/build_push.sh
+```
+
+再推 example：
+
+```bash
 algoflow-algo-provider-example/build_push.sh
 ```
-
-当前会推送到：
-
-```text
-hx-repo.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.0
-```
-
-以后要改镜像版本，直接改 `pyproject.toml` 里的 `version`。

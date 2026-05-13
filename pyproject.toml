@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "算法提供方接入 algoflow-task-node 的示例项目"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "algoflow-task-node==0.1.1",
-]
+dependencies = []
 
 [build-system]
 requires = ["hatchling"]
@@ -14,9 +12,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 packages = ["provider_example"]
-
-[tool.uv.sources]
-algoflow-task-node = { index = "hx" }
 
 [[tool.uv.index]]
 name = "hx"

@@ -13,6 +13,9 @@ spec:
     metadata:
       labels:
         app: algoflow-algo-provider-example
+        job-center/managed: "true"
+      annotations:
+        job-center/slots: "1"
     spec:
       containers:
         - name: algoflow-algo-provider-example
@@ -27,10 +30,38 @@ spec:
                 port: 8000
           terminationMessagePolicy: FallbackToLogsOnError
           env:
-            - name: QUEUE_NAME
+            - name: NODE_TYPE
               value: video_translate
             - name: SCHEDULER_URL
               value: "http://algoflow-task-scheduler:8010"
+            - name: ALGO_CMD
+              value: "python -m provider_example.server"
+            - name: ALGO_PORT
+              value: "8080"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           livenessProbe:
             httpGet:
               path: /healthz
