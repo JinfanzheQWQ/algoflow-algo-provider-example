@@ -29,18 +29,17 @@ class Handler(BaseHTTPRequestHandler):
             params = request.get("params")
             if not isinstance(params, dict):
                 raise ValueError("params is required")
-            
-            # 获取 storage_config 如果有需要的话
-            storage_config = request.get("storage_config") or {}
-            if not isinstance(storage_config, dict):
-                raise ValueError("storage_config must be an object")
 
-            
+            # 获取 config，如果算法有需要可以使用
+            config = request.get("config") or {}
+            if not isinstance(config, dict):
+                raise ValueError("config must be an object")
+
             name = _required_string(params, "name")  # 直接获取 name 参数
             delay_seconds = random.uniform(10, 15)
-            storage_domain = storage_config.get("domain", "")
+            config_domain = config.get("domain", "")
             print(
-                f"收到任务 task_id={task_id} name={name} storage_domain={storage_domain} delay_seconds={delay_seconds:.3f}",
+                f"收到任务 task_id={task_id} name={name} config_domain={config_domain} delay_seconds={delay_seconds:.3f}",
                 flush=True,
             )
             time.sleep(delay_seconds)

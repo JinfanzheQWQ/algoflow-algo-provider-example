@@ -30,7 +30,7 @@ POST /execute
   "params": {
     "name": "张三"
   },
-  "storage_config": {
+  "config": {
     "domain": "static.example.com",
     "object": {
       "bucketName": "example-bucket",
