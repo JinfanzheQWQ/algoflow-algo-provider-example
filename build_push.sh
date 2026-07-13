@@ -4,7 +4,7 @@ set -euo pipefail
 # 镜像版本从 pyproject.toml 读取，镜像名默认使用项目目录名。
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-TENCENT_REGISTRY="hx-repo.tencentcloudcr.com/engine"
+TENCENT_REGISTRY="hx-repo-shanghai.tencentcloudcr.com/engine"
 PLATFORM="linux/amd64"
 IMAGE_NAME="$(basename "$SCRIPT_DIR")"
 UV_CACHE_DIR="${UV_CACHE_DIR:-$(cd "$SCRIPT_DIR/.." && pwd)/.uv-cache}"

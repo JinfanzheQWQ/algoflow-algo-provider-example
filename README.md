@@ -120,7 +120,7 @@ scheduler 会向 node-agent 下发：
 
 ## 镜像
 
-provider 镜像里会从 `algoflow-task-node:v0.1.1` 拷贝 Go node-agent，然后启动本项目的算法服务。
+provider 镜像里会从 `algoflow-task-node:v0.1.8` 拷贝 Go node-agent，然后启动本项目的算法服务。
 
 构建前先推 node-agent 镜像：
 

@@ -36,7 +36,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("config must be an object")
 
             name = _required_string(params, "name")  # 直接获取 name 参数
-            delay_seconds = random.uniform(10, 15)
+            delay_seconds = random.uniform(23, 40)
             config_domain = config.get("domain", "")
             print(
                 f"收到任务 task_id={task_id} name={name} config_domain={config_domain} delay_seconds={delay_seconds:.3f}",
