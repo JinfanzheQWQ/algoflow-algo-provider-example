@@ -71,6 +71,27 @@ python -m provider_example.server
 ALGO_PORT=19002 python -m provider_example.server
 ```
 
+默认任务会随机休眠 23 到 40 秒。本地连调可以覆盖延迟，生产不配置时行为不变：
+
+```bash
+PROVIDER_DELAY_MIN_SECONDS=0.05 \
+PROVIDER_DELAY_MAX_SECONDS=0.15 \
+ALGO_PORT=19002 \
+python -m provider_example.server
+```
+
+压测时也可以在单个任务的 `params.delay_seconds` 中传入非负秒数。该值只覆盖当前任务，未传时仍使用上述随机范围。
+
+正常业务压测还可以传 `params.behavior`：
+
+```text
+success      默认，直接成功
+fail_once    第一次执行失败，重排后成功
+fail_always  每次执行都失败，最终进入失败终态
+```
+
+多个本地算法进程需要共享 `fail_once` 状态时，设置同一个 `PROVIDER_ATTEMPT_STATE_DIR`。普通业务不传 `behavior` 时行为完全不变。
+
 手动调用：
 
 ```bash
