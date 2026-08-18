@@ -30,7 +30,7 @@ spec:
         - name: tc-shanghai-registrykey
       containers:
         - name: algoflow-algo-provider-example
-          image: hx-repo-shanghai.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.5
+          image: hx-repo-shanghai.tencentcloudcr.com/engine/algoflow-algo-provider-example:0.1.6
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

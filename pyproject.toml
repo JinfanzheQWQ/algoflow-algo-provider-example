@@ -1,6 +1,6 @@
 [project]
 name = "algoflow-algo-provider-example"
-version = "0.1.5"
+version = "0.1.6"
 description = "算法提供方接入 algoflow-task-node 的示例项目"
 readme = "README.md"
 requires-python = ">=3.11"
